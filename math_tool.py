@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime, date
+import io
+from github import Github, GithubException
 
 st.set_page_config(page_title="数学错题统计", layout="wide")
 st.title("📚 数学错题归因 & 周月统计系统")
@@ -13,9 +15,50 @@ QUESTION_TYPES = ["选择题", "填空题", "计算题", "应用题", "其他"]
 # 数据文件 纯英文，独立存放，迭代不丢数据
 DATA_FILE = "wrong_questions.csv"
 COLUMNS = ["date", "q_type", "question", "ans_wrong", "ans_right", "error_type", "notes"]
+REPO_NAME = "zcchm/math-wrong-questions"
 
-# 加载数据：自动兼容旧数据，迭代不丢失
+# --- GitHub 持久化（Streamlit Cloud 用） ---
+def _get_github():
+    try:
+        token = st.secrets.get("GITHUB_TOKEN")
+        if token:
+            return Github(token)
+    except Exception:
+        pass
+    return None
+
+def _load_from_github():
+    g = _get_github()
+    if not g:
+        return None
+    try:
+        repo = g.get_repo(REPO_NAME)
+        contents = repo.get_contents(DATA_FILE)
+        csv_str = contents.decoded_content.decode("utf-8")
+        df = pd.read_csv(io.StringIO(csv_str))
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+        return df
+    except GithubException:
+        return None
+
+def _save_to_github(df):
+    g = _get_github()
+    if not g:
+        return False
+    try:
+        repo = g.get_repo(REPO_NAME)
+        contents = repo.get_contents(DATA_FILE)
+        csv_str = df.to_csv(index=False, encoding="utf-8")
+        repo.update_file(contents.path, "update wrong_questions.csv", csv_str, contents.sha)
+        return True
+    except GithubException:
+        return False
+
+# 加载数据：GitHub → 本地回退 → 初始化空表
 def load_data():
+    df = _load_from_github()
+    if df is not None:
+        return df
     try:
         df = pd.read_csv(DATA_FILE, encoding="utf-8")
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
@@ -25,6 +68,8 @@ def load_data():
     return df
 
 def save_data(df):
+    if _save_to_github(df):
+        return
     df.to_csv(DATA_FILE, index=False, encoding="utf-8")
 
 # 初始化
