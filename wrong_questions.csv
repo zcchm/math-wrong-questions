@@ -1,0 +1,5 @@
+Date,Type,Question,Wrong Answer,Correct Answer,Error Type,Notes,date,q_type,question,ans_wrong,ans_right,error_type,notes
+,,,,,,,2026-05-10,计算题,0.125 + 2\dfrac{1}{8} + \left(-2\dfrac{1}{8}\right) + (-0.25),0,1/8,审题错误,
+,,,,,,,2026-05-10,计算题,-9.2-(-7.4)+\frac{1}{5}+\left(-\frac{2}{5}\right),-2 3/5,-2,计算失误,
+,,,,,,,2026-05-10,计算题,(-4/5) × (-1/8 ÷ -3/4) ,-3/40,-2/15,审题错误,
+,,,,,,,2026-05-10,计算题,-(0.4)³ ,-0.064,-0.064,计算失误,
